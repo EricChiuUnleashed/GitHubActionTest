@@ -1,0 +1,30 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+        
+    - name: Install HTMLHint
+      run: npm install -g htmlhint
+      
+    - name: Validate HTML files
+      run: |
+        find . -name "*.html" -type f | head -n 10 | xargs -I {} htmlhint {}
+        
+    - name: Validate CSS files
+      run: |
+        find . -name "*.css" -type f | head -n 10 | xargs -I {} npx stylelint {}
