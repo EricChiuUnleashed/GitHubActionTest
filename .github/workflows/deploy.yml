@@ -1,0 +1,100 @@
+name: Deploy Website
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+    
+    # Discord notification on successful deployment
+    - name: Send Discord Notification
+      if: success()
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d '{
+               "content": "🚀 Deployment Successful!",
+               "embeds": [
+                 {
+                   "title": "Website Deployed",
+                   "description": "The website has been successfully deployed to production.",
+                   "color": 3066993,
+                   "fields": [
+                     {
+                       "name": "Branch",
+                       "value": "${{ github.ref }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "Commit",
+                       "value": "${{ github.sha }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "Deployed by",
+                       "value": "${{ github.actor }}",
+                       "inline": true
+                     }
+                   ],
+                   "timestamp": "${{ github.event.pull_request.created_at || github.event.head_commit.timestamp }}",
+                   "footer": {
+                     "text": "Deployment Notification"
+                   }
+                 }
+               ]
+             }' \
+             ${{ secrets.DISCORD_WEBHOOK_URL }}
+      env:
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        
+    # Optional: Send notification on failure too
+    - name: Send Discord Notification on Failure
+      if: failure()
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d '{
+               "content": "❌ Deployment Failed!",
+               "embeds": [
+                 {
+                   "title": "Deployment Failed",
+                   "description": "The website deployment failed.",
+                   "color": 15158332,
+                   "fields": [
+                     {
+                       "name": "Branch",
+                       "value": "${{ github.ref }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "Commit",
+                       "value": "${{ github.sha }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "Failed by",
+                       "value": "${{ github.actor }}",
+                       "inline": true
+                     }
+                   ],
+                   "timestamp": "${{ github.event.pull_request.created_at || github.event.head_commit.timestamp }}",
+                   "footer": {
+                     "text": "Deployment Notification"
+                   }
+                 }
+               ]
+             }' \
+             ${{ secrets.DISCORD_WEBHOOK_URL }}
+      env:
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
